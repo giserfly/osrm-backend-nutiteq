@@ -35,14 +35,13 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../descriptors/descriptor_base.hpp"
 #include "../descriptors/gpx_descriptor.hpp"
 #include "../descriptors/json_descriptor.hpp"
+#include "../util/integer_range.hpp"
 #include "../util/json_renderer.hpp"
 #include "../util/make_unique.hpp"
 #include "../util/simple_logger.hpp"
 #include "../util/timing_util.hpp"
 
 #include <osrm/json_container.hpp>
-
-#include <boost/range/irange.hpp>
 
 #include <cstdlib>
 
@@ -84,7 +83,7 @@ template <class DataFacadeT> class ViaRoutePlugin final : public BasePlugin
         std::vector<phantom_node_pair> phantom_node_pair_list(route_parameters.coordinates.size());
         const bool checksum_OK = (route_parameters.check_sum == facade->GetCheckSum());
 
-        for (const auto i : ::boost::irange<std::size_t>(0, route_parameters.coordinates.size()))
+        for (const auto i : osrm::irange<std::size_t>(0, route_parameters.coordinates.size()))
         {
             if (checksum_OK && i < route_parameters.hints.size() &&
                 !route_parameters.hints[i].empty())

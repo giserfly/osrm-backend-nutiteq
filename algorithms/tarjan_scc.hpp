@@ -34,13 +34,13 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../data_structures/query_node.hpp"
 #include "../data_structures/percent.hpp"
 
+#include "../util/integer_range.hpp"
 #include "../util/simple_logger.hpp"
 #include "../util/std_hash.hpp"
 #include "../util/timing_util.hpp"
 
 #include <osrm/coordinate.hpp>
 #include <boost/assert.hpp>
-#include <boost/range/irange.hpp>
 #include <cstdint>
 
 #include <memory>
@@ -93,7 +93,7 @@ template <typename GraphT> class TarjanSCC
         unsigned component_index = 0, size_of_current_component = 0;
         unsigned index = 0;
         std::vector<bool> processing_node_before_recursion(max_node_id, true);
-        for (const NodeID node : ::boost::irange(0u, max_node_id))
+        for (const NodeID node : osrm::irange(0u, max_node_id))
         {
             if (SPECIAL_NODEID == components_index[node])
             {

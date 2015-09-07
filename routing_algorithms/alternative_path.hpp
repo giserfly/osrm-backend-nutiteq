@@ -30,10 +30,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "routing_base.hpp"
 #include "../data_structures/search_engine_data.hpp"
+#include "../util/integer_range.hpp"
 #include "../util/container.hpp"
 
 #include <boost/assert.hpp>
-#include <boost/range/irange.hpp>
 
 #include <unordered_map>
 #include <unordered_set>
@@ -430,7 +430,7 @@ class AlternativeRouting final
         // First partially unpack s-->v until paths deviate, note length of common path.
         const int64_t s_v_min_path_size =
             std::min(packed_s_v_path.size(), packed_shortest_path.size()) - 1;
-        for (const int64_t current_node : ::boost::irange<int64_t>(0, s_v_min_path_size))
+        for (const int64_t current_node : osrm::irange<int64_t>(0, s_v_min_path_size))
         {
             if (packed_s_v_path[current_node] == packed_shortest_path[current_node] &&
                 packed_s_v_path[current_node + 1] == packed_shortest_path[current_node + 1])

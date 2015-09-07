@@ -35,7 +35,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../util/json_logger.hpp"
 #include "../util/matching_debug_info.hpp"
 
-#include <boost/range/irange.hpp>
 #include <variant/variant.hpp>
 
 #include <algorithm>
@@ -187,14 +186,14 @@ class MapMatching final : public BasicRoutingInterface<DataFacadeT, MapMatching<
             QueryHeap &reverse_heap = *(engine_working_data.reverse_heap_1);
 
             // compute d_t for this timestamp and the next one
-            for (const auto s : ::boost::irange<std::size_t>(0u, prev_viterbi.size()))
+            for (const auto s : osrm::irange<std::size_t>(0u, prev_viterbi.size()))
             {
                 if (prev_pruned[s])
                 {
                     continue;
                 }
 
-                for (const auto s_prime : ::boost::irange<std::size_t>(0u, current_viterbi.size()))
+                for (const auto s_prime : osrm::irange<std::size_t>(0u, current_viterbi.size()))
                 {
                     // how likely is candidate s_prime at time t to be emitted?
                     const double emission_pr =
@@ -320,7 +319,7 @@ class MapMatching final : public BasicRoutingInterface<DataFacadeT, MapMatching<
             matching.length = 0.0f;
             matching.nodes.resize(reconstructed_indices.size());
             matching.indices.resize(reconstructed_indices.size());
-            for (const auto i : ::boost::irange<std::size_t>(0u, reconstructed_indices.size()))
+            for (const auto i : osrm::irange<std::size_t>(0u, reconstructed_indices.size()))
             {
                 const auto timestamp_index = reconstructed_indices[i].first;
                 const auto location_index = reconstructed_indices[i].second;

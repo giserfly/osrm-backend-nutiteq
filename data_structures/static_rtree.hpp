@@ -38,6 +38,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "upper_bound.hpp"
 
 #include "../util/floating_point.hpp"
+#include "../util/integer_range.hpp"
 #include "../util/mercator.hpp"
 #include "../util/osrm_exception.hpp"
 #include "../util/simple_logger.hpp"
@@ -679,7 +680,7 @@ class StaticRTree
                     LoadLeafFromDisk(current_tree_node.children[0], current_leaf_node);
 
                     // current object represents a block on disk
-                    for (const auto i : ::boost::irange(0u, current_leaf_node.object_count))
+                    for (const auto i : osrm::irange(0u, current_leaf_node.object_count))
                     {
                         const auto &current_edge = current_leaf_node.objects[i];
                         const float current_perpendicular_distance = coordinate_calculation::
@@ -696,7 +697,7 @@ class StaticRTree
                 else
                 {
                     // for each child mbr get a lower bound and enqueue it
-                    for (const auto i : ::boost::irange(0u, current_tree_node.child_count))
+                    for (const auto i : osrm::irange(0u, current_tree_node.child_count))
                     {
                         const int32_t child_id = current_tree_node.children[i];
                         const TreeNode &child_tree_node = m_search_tree[child_id];
@@ -827,7 +828,7 @@ class StaticRTree
                     LoadLeafFromDisk(current_tree_node.children[0], current_leaf_node);
 
                     // current object represents a block on disk
-                    for (const auto i : ::boost::irange(0u, current_leaf_node.object_count))
+                    for (const auto i : osrm::irange(0u, current_leaf_node.object_count))
                     {
                         const auto &current_edge = current_leaf_node.objects[i];
                         const float current_perpendicular_distance = coordinate_calculation::
@@ -854,7 +855,7 @@ class StaticRTree
                 else
                 {
                     // for each child mbr get a lower bound and enqueue it
-                    for (const auto i : ::boost::irange(0u, current_tree_node.child_count))
+                    for (const auto i : osrm::irange(0u, current_tree_node.child_count))
                     {
                         const int32_t child_id = current_tree_node.children[i];
                         const TreeNode &child_tree_node = m_search_tree[child_id];

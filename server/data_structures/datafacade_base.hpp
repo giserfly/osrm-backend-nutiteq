@@ -34,17 +34,16 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../../data_structures/external_memory_node.hpp"
 #include "../../data_structures/phantom_node.hpp"
 #include "../../data_structures/turn_instructions.hpp"
+#include "../../util/integer_range.hpp"
 #include "../../util/osrm_exception.hpp"
 #include "../../util/string_util.hpp"
 #include "../../typedefs.h"
 
 #include <osrm/coordinate.hpp>
 
-#include <boost/range/irange.hpp>
-
 #include <string>
 
-using EdgeRange = ::boost::integer_range<EdgeID>;
+using EdgeRange = osrm::range<EdgeID>;
 
 template <class EdgeDataT> class BaseDataFacade
 {

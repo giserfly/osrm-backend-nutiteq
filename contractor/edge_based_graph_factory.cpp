@@ -28,12 +28,12 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "edge_based_graph_factory.hpp"
 #include "../data_structures/percent.hpp"
 #include "../util/compute_angle.hpp"
+#include "../util/integer_range.hpp"
 #include "../util/lua_util.hpp"
 #include "../util/simple_logger.hpp"
 #include "../util/timing_util.hpp"
 
 #include <boost/assert.hpp>
-#include <boost/range/irange.hpp>
 
 #include <fstream>
 #include <iomanip>
@@ -127,7 +127,7 @@ void EdgeBasedGraphFactory::InsertEdgeBasedNode(const NodeID node_u,
         // TODO: move to lambda function with C++11
         int temp_sum = 0;
 
-        for (const auto i : ::boost::irange(0u, geometry_size))
+        for (const auto i : osrm::irange(0u, geometry_size))
         {
             forward_dist_prefix_sum[i] = temp_sum;
             temp_sum += forward_geometry[i].second;
@@ -136,7 +136,7 @@ void EdgeBasedGraphFactory::InsertEdgeBasedNode(const NodeID node_u,
         }
 
         temp_sum = 0;
-        for (const auto i : ::boost::irange(0u, geometry_size))
+        for (const auto i : osrm::irange(0u, geometry_size))
         {
             temp_sum += reverse_geometry[reverse_geometry.size() - 1 - i].second;
             reverse_dist_prefix_sum[i] = reverse_data.distance - temp_sum;
@@ -146,7 +146,7 @@ void EdgeBasedGraphFactory::InsertEdgeBasedNode(const NodeID node_u,
         NodeID current_edge_source_coordinate_id = node_u;
 
         // traverse arrays from start and end respectively
-        for (const auto i : ::boost::irange(0u, geometry_size))
+        for (const auto i : osrm::irange(0u, geometry_size))
         {
             BOOST_ASSERT(current_edge_source_coordinate_id ==
                          reverse_geometry[geometry_size - 1 - i].first);
@@ -249,7 +249,7 @@ unsigned EdgeBasedGraphFactory::RenumberEdges()
 {
     // renumber edge based node of outgoing edges
     unsigned numbered_edges_count = 0;
-    for (const auto current_node : ::boost::irange(0u, m_node_based_graph->GetNumberOfNodes()))
+    for (const auto current_node : osrm::irange(0u, m_node_based_graph->GetNumberOfNodes()))
     {
         for (const auto current_edge : m_node_based_graph->GetAdjacentEdgeRange(current_node))
         {
@@ -278,7 +278,7 @@ void EdgeBasedGraphFactory::GenerateEdgeExpandedNodes()
     Percent progress(m_node_based_graph->GetNumberOfNodes());
 
     // loop over all edges and generate new set of nodes
-    for (const auto node_u : ::boost::irange(0u, m_node_based_graph->GetNumberOfNodes()))
+    for (const auto node_u : osrm::irange(0u, m_node_based_graph->GetNumberOfNodes()))
     {
         BOOST_ASSERT(node_u != SPECIAL_NODEID);
         BOOST_ASSERT(node_u < m_node_based_graph->GetNumberOfNodes());
@@ -342,7 +342,7 @@ void EdgeBasedGraphFactory::GenerateEdgeExpandedEdges(
 
     Percent progress(m_node_based_graph->GetNumberOfNodes());
 
-    for (const auto node_u : ::boost::irange(0u, m_node_based_graph->GetNumberOfNodes()))
+    for (const auto node_u : osrm::irange(0u, m_node_based_graph->GetNumberOfNodes()))
     {
         progress.printStatus(node_u);
         for (const EdgeID e1 : m_node_based_graph->GetAdjacentEdgeRange(node_u))

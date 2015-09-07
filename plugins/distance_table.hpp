@@ -40,7 +40,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../util/timing_util.hpp"
 
 #include <osrm/json_container.hpp>
-#include <boost/range/irange.hpp>
 
 #include <cstdlib>
 
@@ -82,7 +81,7 @@ template <class DataFacadeT> class DistanceTablePlugin final : public BasePlugin
                      static_cast<unsigned>(route_parameters.coordinates.size()));
 
         PhantomNodeArray phantom_node_vector(max_locations);
-        for (const auto i : ::boost::irange(0u, max_locations))
+        for (const auto i : osrm::irange(0u, max_locations))
         {
             if (checksum_OK && i < route_parameters.hints.size() &&
                 !route_parameters.hints[i].empty())
@@ -113,7 +112,7 @@ template <class DataFacadeT> class DistanceTablePlugin final : public BasePlugin
 
         osrm::json::Array json_array;
         const auto number_of_locations = phantom_node_vector.size();
-        for (const auto row : ::boost::irange<std::size_t>(0, number_of_locations))
+        for (const auto row : osrm::irange<std::size_t>(0, number_of_locations))
         {
             osrm::json::Array json_row;
             auto row_begin_iterator = result_table->begin() + (row * number_of_locations);

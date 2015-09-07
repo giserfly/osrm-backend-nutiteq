@@ -29,10 +29,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define SHORTEST_PATH_HPP
 
 #include <boost/assert.hpp>
-#include <boost/range/irange.hpp>
 
 #include "routing_base.hpp"
 #include "../data_structures/search_engine_data.hpp"
+#include "../util/integer_range.hpp"
 #include "../typedefs.h"
 
 template <class DataFacadeT>
@@ -317,7 +317,7 @@ class ShortestPathRouting final
         }
         raw_route_data.unpacked_path_segments.resize(packed_legs1.size());
 
-        for (const std::size_t index : ::boost::irange<std::size_t>(0, packed_legs1.size()))
+        for (const std::size_t index : osrm::irange<std::size_t>(0, packed_legs1.size()))
         {
             BOOST_ASSERT(!phantom_nodes_vector.empty());
             BOOST_ASSERT(packed_legs1.size() == raw_route_data.unpacked_path_segments.size());

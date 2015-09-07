@@ -37,7 +37,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../util/simple_logger.hpp"
 
 #include <boost/filesystem.hpp>
-#include <boost/range/irange.hpp>
 
 #if defined(__APPLE__) || defined(_WIN32)
 #include <gdal.h>
@@ -199,7 +198,7 @@ int main(int argc, char *argv[])
         uint64_t total_network_length = 0;
         percentage.reinit(graph->GetNumberOfNodes());
         TIMER_START(SCC_OUTPUT);
-        for (const NodeID source : ::boost::irange(0u, graph->GetNumberOfNodes()))
+        for (const NodeID source : osrm::irange(0u, graph->GetNumberOfNodes()))
         {
             percentage.printIncrement();
             for (const auto current_edge : graph->GetAdjacentEdgeRange(source))

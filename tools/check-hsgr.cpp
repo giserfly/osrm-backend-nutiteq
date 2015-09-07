@@ -27,13 +27,13 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../data_structures/percent.hpp"
 #include "../data_structures/query_edge.hpp"
 #include "../data_structures/static_graph.hpp"
+#include "../util/integer_range.hpp"
 #include "../util/graph_loader.hpp"
 #include "../util/simple_logger.hpp"
 #include "../util/osrm_exception.hpp"
 
 #include <boost/assert.hpp>
 #include <boost/filesystem.hpp>
-#include <boost/range/irange.hpp>
 
 #include <memory>
 #include <vector>
@@ -72,7 +72,7 @@ int main(int argc, char *argv[])
         BOOST_ASSERT_MSG(0 == edge_list.size(), "edge list not flushed");
 
         Percent progress(m_query_graph->GetNumberOfNodes());
-        for (const auto node_u : ::boost::irange(0u, m_query_graph->GetNumberOfNodes()))
+        for (const auto node_u : osrm::irange(0u, m_query_graph->GetNumberOfNodes()))
         {
             for (const auto eid : m_query_graph->GetAdjacentEdgeRange(node_u))
             {

@@ -48,7 +48,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <osrm/json_container.hpp>
 #include <boost/assert.hpp>
-#include <boost/range/irange.hpp>
 
 #include <cstdlib>
 #include <algorithm>
@@ -79,7 +78,7 @@ template <class DataFacadeT> class RoundTripPlugin final : public BasePlugin
         const bool checksum_OK = (route_parameters.check_sum == facade->GetCheckSum());
 
         // find phantom nodes for all input coords
-        for (const auto i : ::boost::irange<std::size_t>(0, route_parameters.coordinates.size()))
+        for (const auto i : osrm::irange<std::size_t>(0, route_parameters.coordinates.size()))
         {
             // if client hints are helpful, encode hints
             if (checksum_OK && i < route_parameters.hints.size() &&

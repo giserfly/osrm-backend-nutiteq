@@ -28,8 +28,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef HIDDEN_MARKOV_MODEL
 #define HIDDEN_MARKOV_MODEL
 
+#include "../util/integer_range.hpp"
+
 #include <boost/assert.hpp>
-#include <boost/range/irange.hpp>
 
 #include <cmath>
 
@@ -107,7 +108,7 @@ template <class CandidateLists> struct HiddenMarkovModel
         BOOST_ASSERT(viterbi.size() == parents.size() && parents.size() == path_lengths.size() &&
                      path_lengths.size() == pruned.size() && pruned.size() == breakage.size());
 
-        for (const auto t : ::boost::irange(initial_timestamp, viterbi.size()))
+        for (const auto t : osrm::irange(initial_timestamp, viterbi.size()))
         {
             std::fill(viterbi[t].begin(), viterbi[t].end(), osrm::matching::IMPOSSIBLE_LOG_PROB);
             std::fill(parents[t].begin(), parents[t].end(), std::make_pair(0u, 0u));
@@ -124,7 +125,7 @@ template <class CandidateLists> struct HiddenMarkovModel
 
         do
         {
-            for (const auto s : ::boost::irange<std::size_t>(0u, viterbi[initial_timestamp].size()))
+            for (const auto s : osrm::irange<std::size_t>(0u, viterbi[initial_timestamp].size()))
             {
                 viterbi[initial_timestamp][s] =
                     emission_log_probability(candidates_list[initial_timestamp][s].second);

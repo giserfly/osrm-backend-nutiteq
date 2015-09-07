@@ -38,6 +38,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "../util/git_sha.hpp"
 #include "../util/graph_loader.hpp"
+#include "../util/integer_range.hpp"
 #include "../util/lua_util.hpp"
 #include "../util/make_unique.hpp"
 #include "../util/osrm_exception.hpp"
@@ -259,7 +260,7 @@ std::size_t Prepare::WriteContractedGraph(unsigned max_node_id,
     StaticGraph<EdgeData>::EdgeIterator last_edge;
 
     // initializing 'first_edge'-field of nodes:
-    for (const auto node : ::boost::irange(0u, max_used_node_id+1))
+    for (const auto node : osrm::irange(0u, max_used_node_id+1))
     {
         last_edge = edge;
         while ((edge < contracted_edge_count) && ((*contracted_edge_list)[edge].source == node))
@@ -270,7 +271,7 @@ std::size_t Prepare::WriteContractedGraph(unsigned max_node_id,
         position += edge - last_edge;           // remove
     }
 
-    for (const auto sentinel_counter : ::boost::irange<unsigned>(max_used_node_id+1, node_array.size()))
+    for (const auto sentinel_counter : osrm::irange<unsigned>(max_used_node_id+1, node_array.size()))
     {
         // sentinel element, guarded against underflow
         node_array[sentinel_counter].first_edge = contracted_edge_count;
@@ -297,7 +298,7 @@ std::size_t Prepare::WriteContractedGraph(unsigned max_node_id,
     int number_of_used_edges = 0;
 
     StaticGraph<EdgeData>::EdgeArrayEntry current_edge;
-    for (const auto edge : ::boost::irange<std::size_t>(0, contracted_edge_list->size()))
+    for (const auto edge : osrm::irange<std::size_t>(0, contracted_edge_list->size()))
     {
         // no eigen loops
         BOOST_ASSERT((*contracted_edge_list)[edge].source != (*contracted_edge_list)[edge].target);

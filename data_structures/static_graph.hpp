@@ -30,10 +30,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "percent.hpp"
 #include "shared_memory_vector_wrapper.hpp"
+#include "../util/integer_range.hpp"
 #include "../typedefs.h"
 
 #include <boost/assert.hpp>
-#include <boost/range/irange.hpp>
 
 #include <algorithm>
 #include <limits>
@@ -46,7 +46,7 @@ template <typename EdgeDataT, bool UseSharedMemory = false> class StaticGraph
     using NodeIterator = NodeID;
     using EdgeIterator = NodeID;
     using EdgeData = EdgeDataT;
-    using EdgeRange = ::boost::integer_range<EdgeIterator>;
+    using EdgeRange = osrm::range<EdgeIterator>;
 
     class InputEdge
     {
@@ -84,7 +84,7 @@ template <typename EdgeDataT, bool UseSharedMemory = false> class StaticGraph
 
     EdgeRange GetAdjacentEdgeRange(const NodeID node) const
     {
-      return ::boost::irange(BeginEdges(node), EndEdges(node));
+        return osrm::irange(BeginEdges(node), EndEdges(node));
     }
 
     template<typename ContainerT>
@@ -97,7 +97,7 @@ template <typename EdgeDataT, bool UseSharedMemory = false> class StaticGraph
         node_array.resize(number_of_nodes + 1);
         EdgeIterator edge = 0;
         EdgeIterator position = 0;
-        for (const auto node : ::boost::irange(0u, number_of_nodes + 1))
+        for (const auto node : osrm::irange(0u, number_of_nodes + 1))
         {
             EdgeIterator last_edge = edge;
             while (edge < number_of_edges && graph[edge].source == node)
@@ -109,10 +109,10 @@ template <typename EdgeDataT, bool UseSharedMemory = false> class StaticGraph
         }
         edge_array.resize(position); //(edge)
         edge = 0;
-        for (const auto node : ::boost::irange(0u, number_of_nodes))
+        for (const auto node : osrm::irange(0u, number_of_nodes))
         {
             EdgeIterator e = node_array[node + 1].first_edge;
-            for (const auto i : ::boost::irange(node_array[node].first_edge, e))
+            for (const auto i : osrm::irange(node_array[node].first_edge, e))
             {
                 edge_array[i].target = graph[edge].target;
                 edge_array[i].data = graph[edge].data;
@@ -159,7 +159,7 @@ template <typename EdgeDataT, bool UseSharedMemory = false> class StaticGraph
     // searches for a specific edge
     EdgeIterator FindEdge(const NodeIterator from, const NodeIterator to) const
     {
-        for (const auto i : ::boost::irange(BeginEdges(from), EndEdges(from)))
+        for (const auto i : osrm::irange(BeginEdges(from), EndEdges(from)))
         {
             if (to == edge_array[i].target)
             {

@@ -32,6 +32,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "request_handler.hpp"
 
 #include "../util/cast.hpp"
+#include "../util/integer_range.hpp"
 #include "../util/simple_logger.hpp"
 
 #include <boost/asio.hpp>

@@ -28,10 +28,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef RANGE_TABLE_HPP
 #define RANGE_TABLE_HPP
 
+#include "../util/integer_range.hpp"
 #include "shared_memory_factory.hpp"
 #include "shared_memory_vector_wrapper.hpp"
-
-#include <boost/range/irange.hpp>
 
 #include <fstream>
 #include <vector>
@@ -65,7 +64,7 @@ template <unsigned BLOCK_SIZE, bool USE_SHARED_MEMORY> class RangeTable
     using BlockT = std::array<unsigned char, BLOCK_SIZE>;
     using BlockContainerT = typename ShM<BlockT, USE_SHARED_MEMORY>::vector;
     using OffsetContainerT = typename ShM<unsigned, USE_SHARED_MEMORY>::vector;
-    using RangeT = ::boost::integer_range<unsigned>;
+    using RangeT = osrm::range<unsigned>;
 
     friend std::ostream &operator<<<>(std::ostream &out, const RangeTable &table);
     friend std::istream &operator>><>(std::istream &in, RangeTable &table);
@@ -196,7 +195,7 @@ template <unsigned BLOCK_SIZE, bool USE_SHARED_MEMORY> class RangeTable
         BOOST_ASSERT(begin_idx < sum_lengths && end_idx <= sum_lengths);
         BOOST_ASSERT(begin_idx <= end_idx);
 
-        return ::boost::irange(begin_idx, end_idx);
+        return osrm::irange(begin_idx, end_idx);
     }
 
   private:

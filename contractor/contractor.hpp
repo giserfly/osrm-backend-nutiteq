@@ -35,12 +35,12 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../data_structures/query_edge.hpp"
 #include "../data_structures/xor_fast_hash.hpp"
 #include "../data_structures/xor_fast_hash_storage.hpp"
+#include "../util/integer_range.hpp"
 #include "../util/simple_logger.hpp"
 #include "../util/timing_util.hpp"
 #include "../typedefs.h"
 
 #include <boost/assert.hpp>
-#include <boost/range/irange.hpp>
 
 #include <stxxl/vector>
 
@@ -357,7 +357,7 @@ class Contractor
 
                 // build forward and backward renumbering map and remap ids in remaining_nodes and
                 // Priorities.
-                for (const auto new_node_id : ::boost::irange<std::size_t>(0, remaining_nodes.size()))
+                for (const auto new_node_id : osrm::irange<std::size_t>(0, remaining_nodes.size()))
                 {
                     // create renumbering maps in both directions
                     orig_node_id_from_new_node_id_map[new_node_id] = remaining_nodes[new_node_id].id;
@@ -368,7 +368,7 @@ class Contractor
                 }
                 // walk over all nodes
                 for (const auto i :
-                     ::boost::irange<std::size_t>(0, contractor_graph->GetNumberOfNodes()))
+                     osrm::irange<std::size_t>(0, contractor_graph->GetNumberOfNodes()))
                 {
                     const NodeID source = i;
                     for (auto current_edge : contractor_graph->GetAdjacentEdgeRange(source))
@@ -581,7 +581,7 @@ class Contractor
         if (contractor_graph->GetNumberOfNodes())
         {
             Edge new_edge;
-            for (const auto node : ::boost::irange(0u, number_of_nodes))
+            for (const auto node : osrm::irange(0u, number_of_nodes))
             {
                 p.printStatus(node);
                 for (auto edge : contractor_graph->GetAdjacentEdgeRange(node))
@@ -864,7 +864,7 @@ class Contractor
         std::sort(neighbours.begin(), neighbours.end());
         neighbours.resize(std::unique(neighbours.begin(), neighbours.end()) - neighbours.begin());
 
-        for (const auto i : ::boost::irange<std::size_t>(0, neighbours.size()))
+        for (const auto i : osrm::irange<std::size_t>(0, neighbours.size()))
         {
             contractor_graph->DeleteEdgesTo(neighbours[i], node);
         }

@@ -32,6 +32,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "routing_base.hpp"
 #include "../data_structures/search_engine_data.hpp"
+#include "../util/integer_range.hpp"
 #include "../util/timing_util.hpp"
 #include "../typedefs.h"
 
