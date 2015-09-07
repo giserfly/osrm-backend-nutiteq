@@ -59,7 +59,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <atomic>
 #include <chrono>
 #include <fstream>
-#include <functional>
 #include <iostream>
 #include <thread>
 #include <unordered_map>
@@ -179,8 +178,8 @@ int extractor::run()
                             ++number_of_nodes;
                             luabind::call_function<void>(
                                 local_state, "node_function",
-                                std::cref(static_cast<const osmium::Node &>(*entity)),
-                                std::ref(result_node));
+                                boost::cref(static_cast<const osmium::Node &>(*entity)),
+                                boost::ref(result_node));
                             resulting_nodes.push_back(std::make_pair(x, result_node));
                             break;
                         case osmium::item_type::way:
@@ -188,8 +187,8 @@ int extractor::run()
                             ++number_of_ways;
                             luabind::call_function<void>(
                                 local_state, "way_function",
-                                std::cref(static_cast<const osmium::Way &>(*entity)),
-                                std::ref(result_way));
+                                boost::cref(static_cast<const osmium::Way &>(*entity)),
+                                boost::ref(result_way));
                             resulting_ways.push_back(std::make_pair(x, result_way));
                             break;
                         case osmium::item_type::relation:

@@ -33,11 +33,12 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../util/osrm_exception.hpp"
 #include "../util/simple_logger.hpp"
 
+#include <boost/algorithm/string.hpp>
 #include <boost/algorithm/string/regex.hpp>
+#include <boost/ref.hpp>
 #include <boost/regex.hpp>
 
 #include <algorithm>
-#include <functional>
 
 namespace
 {
@@ -86,7 +87,7 @@ void RestrictionParser::ReadRestrictionExceptions(lua_State *lua_state)
         luabind::set_pcall_callback(&lua_error_callback);
         // get list of turn restriction exceptions
         luabind::call_function<void>(lua_state, "get_exceptions",
-                                     std::ref(restriction_exceptions));
+                                     boost::ref(restriction_exceptions));
         const unsigned exception_count = restriction_exceptions.size();
         SimpleLogger().Write() << "Found " << exception_count
                                << " exceptions to turn restrictions:";
