@@ -13,11 +13,11 @@ IF EXIST %DEPSPKG% DEL %DEPSPKG%
 IF %ERRORLEVEL% NEQ 0 GOTO ERROR
 
 ECHO downloading %DEPSPKG%
-powershell Invoke-WebRequest https://mapbox.s3.amazonaws.com/windows-builds/windows-build-deps/$env:DEPSPKG -OutFile C:\projects\osrm\$env:DEPSPKG
-IF %ERRORLEVEL% NEQ 0 GOTO ERROR
+rem owershell Invoke-WebRequest https://mapbox.s3.amazonaws.com/windows-builds/windows-deps/$env:DEPSPKG -OutFile c:\projects\nutiteq\osrm-backend-nutiteq\$env:DEPSPKG
+rem IF %ERRORLEVEL% NEQ 0 GOTO ERROR
 
-7z -y x %DEPSPKG% | %windir%\system32\FIND "ing archive"
-IF %ERRORLEVEL% NEQ 0 GOTO ERROR
+rem 7z -y x %DEPSPKG% | %windir%\system32\FIND "ing archive"
+rem IF %ERRORLEVEL% NEQ 0 GOTO ERROR
 
 :SKIPDL
 
@@ -28,7 +28,7 @@ IF %ERRORLEVEL% NEQ 0 GOTO ERROR
 cd build
 IF %ERRORLEVEL% NEQ 0 GOTO ERROR
 
-SET OSRMDEPSDIR=c:\projects\osrm\osrm-deps
+SET OSRMDEPSDIR=c:\projects\nutiteq\osrm-backend-nutiteq\osrm-deps
 set PREFIX=%OSRMDEPSDIR%/libs
 set BOOST_ROOT=%OSRMDEPSDIR%/boost
 set TBB_INSTALL_DIR=%OSRMDEPSDIR%/tbb
@@ -38,6 +38,7 @@ ECHO calling cmake ....
 cmake .. ^
 -G "Visual Studio 14 Win64" ^
 -DBOOST_ROOT=%BOOST_ROOT% ^
+-DBOOST_INCLUDEDIR=c:\projects\nutiteq\osrm-backend-nutiteq\osrm-deps\boost\include\boost-1_57 ^
 -DBoost_ADDITIONAL_VERSIONS=1.57 ^
 -DBoost_USE_MULTITHREADED=ON ^
 -DBoost_USE_STATIC_LIBS=ON ^
@@ -62,10 +63,10 @@ IF %ERRORLEVEL% NEQ 0 GOTO ERROR
 
 ECHO ========= TODO^: CREATE PACKAGES ==========
 
-CD c:\projects\osrm\build\%Configuration%
+CD c:\projects\nutiteq\osrm-backend-nutiteq\build\%Configuration%
 IF %ERRORLEVEL% NEQ 0 GOTO ERROR
 
-SET PATH=c:\projects\osrm\osrm-deps\libs\bin;%PATH%
+SET PATH=c:\projects\nutiteq\osrm-backend-nutiteq\osrm-deps\libs\bin;%PATH%
 
 ECHO running datastructure-tests.exe ...
 datastructure-tests.exe
@@ -82,19 +83,19 @@ ECHO ============== ERROR ===============
 
 :DONE
 ECHO ============= DONE ===============
-CD C:\projects\osrm
+CD c:\projects\nutiteq\osrm-backend-nutiteq
 EXIT /b %EL%
 
 
 
 
-  - cd c:/projects/osrm
+  - cd c:\projects\nutiteq\osrm-backend-nutiteq
   - mkdir build
   - cd build
   - echo Running cmake...
   - call "%VS120COMNTOOLS%\..\..\VC\vcvarsall.bat" x86_amd64
   - SET PATH=C:\Program Files (x86)\MSBuild\12.0\bin\;%PATH%
-  - SET P=c:/projects/osrm
+  - SET P=c:\projects\nutiteq\osrm-backend-nutiteq
   - set TBB_INSTALL_DIR=%P%/tbb
   - set TBB_ARCH_PLATFORM=intel64/vc12
   - cmake .. -G "Visual Studio 14 Win64" -DCMAKE_BUILD_TYPE=%Configuration% -DCMAKE_INSTALL_PREFIX=%P%/libs -DBOOST_ROOT=%P%/boost_min -DBoost_ADDITIONAL_VERSIONS=1.57 -DBoost_USE_STATIC_LIBS=ON
@@ -107,7 +108,7 @@ EXIT /b %EL%
   - cd ..\..\profiles
   - echo disk=c:\temp\stxxl,10000,wincall > .stxxl.txt
   - if "%APPVEYOR_REPO_BRANCH%"=="develop" (7z a %P%/osrm_%Configuration%.zip * -tzip)
-  - set PATH=%PATH%;c:/projects/osrm/libs/bin
-  - cd c:/projects/osrm/build/%Configuration%
+  - set PATH=%PATH%;c:\projects\nutiteq\osrm-backend-nutiteq/libs/bin
+  - cd c:\projects\nutiteq\osrm-backend-nutiteq/build/%Configuration%
   - datastructure-tests.exe
   - algorithm-tests.exe
