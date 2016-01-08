@@ -36,7 +36,7 @@ IF %ERRORLEVEL% NEQ 0 GOTO ERROR
 IF EXIST build ECHO deletings build dir... && RD /S /Q build
 IF %ERRORLEVEL% NEQ 0 GOTO ERROR
 
-7z -y x %DEPSPKG% | %windir%\system32\FIND "ing archive"
+7za -y x %DEPSPKG% | %windir%\system32\FIND "ing archive"
 IF %ERRORLEVEL% NEQ 0 GOTO ERROR
 
 MKDIR build
@@ -99,14 +99,14 @@ SET ZIP= %P%\osrm_%Configuration%.zip
 IF EXIST %ZIP% ECHO deleting %ZIP% && DEL /F /Q %ZIP%
 IF %ERRORLEVEL% NEQ 0 ECHO deleting %ZIP% FAILED && GOTO ERROR
 
-7z a %ZIP% *.lib *.exe *.pdb %P%/osrm-deps/libs/bin/*.dll -tzip -mx9 | %windir%\system32\FIND "ing archive"
+7za a %ZIP% *.lib *.exe *.pdb %P%/osrm-deps/libs/bin/*.dll -tzip -mx9 | %windir%\system32\FIND "ing archive"
 IF %ERRORLEVEL% NEQ 0 GOTO ERROR
 
 CD ..\..\profiles
 IF %ERRORLEVEL% NEQ 0 GOTO ERROR
 
 ECHO disk=c:\temp\stxxl,10000,wincall > .stxxl.txt
-7z a %ZIP% * -tzip -mx9 | %windir%\system32\FIND "ing archive"
+7za a %ZIP% * -tzip -mx9 | %windir%\system32\FIND "ing archive"
 IF %ERRORLEVEL% NEQ 0 GOTO ERROR
 
 GOTO DONE

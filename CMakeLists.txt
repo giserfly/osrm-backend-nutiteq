@@ -36,8 +36,11 @@ option(BUILD_TOOLS "Build OSRM tools" OFF)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include/)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/nutiteq/engine/)
 include_directories(SYSTEM ${CMAKE_CURRENT_SOURCE_DIR}/third_party/)
 include_directories(SYSTEM ${CMAKE_CURRENT_SOURCE_DIR}/third_party/libosmium/include/)
+include_directories(SYSTEM ${CMAKE_CURRENT_SOURCE_DIR}/nutiteq/libs/cglib/)
+include_directories(SYSTEM ${CMAKE_CURRENT_SOURCE_DIR}/nutiteq/libs/stdext/)
 
 add_custom_target(FingerPrintConfigure ALL ${CMAKE_COMMAND}
   "-DOUTPUT_DIR=${CMAKE_CURRENT_BINARY_DIR}"
@@ -86,6 +89,7 @@ file(GLOB LibOSRMGlob library/*.cpp)
 file(GLOB DataStructureTestsGlob unit_tests/data_structures/*.cpp data_structures/hilbert_value.cpp)
 file(GLOB AlgorithmTestsGlob unit_tests/algorithms/*.cpp algorithms/graph_compressor.cpp)
 file(GLOB UtilTestsGlob unit_tests/util/*.cpp)
+file(GLOB NutiteqEngineGlob nutiteq/engine/Routing/*.cpp)
 
 set(
   OSRMSources
@@ -93,6 +97,7 @@ set(
   ${DescriptorGlob}
   ${DatastructureGlob}
   ${AlgorithmGlob}
+  ${NutiteqEngineGlob}
   ${HttpGlob}
 )
 
@@ -171,7 +176,10 @@ endif()
 
 if(NOT WIN32)
   add_definitions(-DBOOST_TEST_DYN_LINK)
+else()
+  add_definitions(-D_ITERATOR_DEBUG_LEVEL=0)
 endif()
+add_definitions(-DNUTISERVER)
 
 # Configuring compilers
 if(${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")

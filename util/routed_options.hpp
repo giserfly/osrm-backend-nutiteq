@@ -165,6 +165,7 @@ GenerateServerProgramOptions(const int argc,
     // as well as in a config file
     boost::program_options::options_description config_options("Configuration");
     config_options.add_options()                                                             //
+#ifndef NUTISERVER
         ("hsgrdata", value<boost::filesystem::path>(&paths["hsgrdata"]), ".hsgr file")       //
         ("nodesdata", value<boost::filesystem::path>(&paths["nodesdata"]), ".nodes file")    //
         ("edgesdata", value<boost::filesystem::path>(&paths["edgesdata"]), ".edges file")    //
@@ -176,6 +177,7 @@ GenerateServerProgramOptions(const int argc,
          ".names file") //
         ("timestamp", value<boost::filesystem::path>(&paths["timestamp"]),
          ".timestamp file") //
+#endif
         ("ip,i", value<std::string>(&ip_address)->default_value("0.0.0.0"),
          "IP address") //
         ("port,p", value<int>(&ip_port)->default_value(5000),
@@ -198,8 +200,13 @@ GenerateServerProgramOptions(const int argc,
     // file, but will not be shown to the user
     boost::program_options::options_description hidden_options("Hidden options");
     hidden_options.add_options()("base,b", value<boost::filesystem::path>(&paths["base"]),
-                                 "base path to .osrm file");
-
+#ifndef NUTISERVER
+        "base path to .osrm file"
+#else
+        "base path to .nutigraph files"
+#endif
+    );
+        
     // positional option
     boost::program_options::positional_options_description positional_options;
     positional_options.add("base", 1);
@@ -211,8 +218,13 @@ GenerateServerProgramOptions(const int argc,
     boost::program_options::options_description config_file_options;
     config_file_options.add(config_options).add(hidden_options);
 
+#ifndef NUTISERVER
     boost::program_options::options_description visible_options(
         boost::filesystem::basename(argv[0]) + " <base.osrm> [<options>]");
+#else
+    boost::program_options::options_description visible_options(
+        boost::filesystem::basename(argv[0]) + " <.nutigraph directory> [<options>]");
+#endif
     visible_options.add(generic_options).add(config_options);
 
     // parse command line options

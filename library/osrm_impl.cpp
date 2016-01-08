@@ -42,6 +42,9 @@ class named_mutex;
 #include "../plugins/trip.hpp"
 #include "../plugins/viaroute.hpp"
 #include "../plugins/match.hpp"
+#ifdef NUTISERVER
+#include "../plugins/nuti_viaroute.hpp"
+#endif
 #include "../server/data_structures/datafacade_base.hpp"
 #include "../server/data_structures/internal_datafacade.hpp"
 #include "../server/data_structures/shared_barriers.hpp"
@@ -65,6 +68,7 @@ class named_mutex;
 
 OSRM::OSRM_impl::OSRM_impl(LibOSRMConfig& lib_config)
 {
+#ifndef NUTISERVER
     if (lib_config.use_shared_memory)
     {
         barrier = osrm::make_unique<SharedBarriers>();
@@ -89,6 +93,9 @@ OSRM::OSRM_impl::OSRM_impl(LibOSRMConfig& lib_config)
                 lib_config.max_locations_viaroute));
     RegisterPlugin(new RoundTripPlugin<BaseDataFacade<QueryEdge::EdgeData>>(query_data_facade,
                 lib_config.max_locations_trip));
+#else
+    RegisterPlugin(new NutiViaRoutePlugin(lib_config.server_paths["base"], lib_config.max_locations_viaroute));
+#endif
 }
 
 void OSRM::OSRM_impl::RegisterPlugin(BasePlugin *raw_plugin_ptr)
