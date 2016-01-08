@@ -6,6 +6,10 @@ Given(/^the import format "(.*?)"$/) do |format|
   set_input_format format
 end
 
+Given /^the extract extra arguments "(.*?)"$/ do |args|
+    set_extract_args args
+end
+
 Given /^a grid size of (\d+) meters$/ do |meters|
   set_grid_size meters
 end
@@ -28,7 +32,7 @@ Given /^the node map$/ do |table|
         raise "*** invalid node name '#{name}', must me alphanumeric" unless name.match /[a-z0-9]/
         if name.match /[a-z]/
           raise "*** duplicate node '#{name}'" if name_node_hash[name]
-          add_osm_node name, *table_coord_to_lonlat(ci,ri)
+          add_osm_node name, *table_coord_to_lonlat(ci,ri), nil
         else
           raise "*** duplicate node '#{name}'" if location_hash[name]
           add_location name, *table_coord_to_lonlat(ci,ri)
@@ -43,7 +47,9 @@ Given /^the node locations$/ do |table|
     name = row['node']
     raise "*** duplicate node '#{name}'" if find_node_by_name name
     if name.match /[a-z]/
-      add_osm_node name, row['lon'].to_f, row['lat'].to_f
+      id = row['id']
+      id = id.to_i if id
+      add_osm_node name, row['lon'].to_f, row['lat'].to_f, id
     else
       add_location name, row['lon'].to_f, row['lat'].to_f
     end
@@ -115,8 +121,8 @@ Given /^the relations$/ do |table|
           raise "*** unknown relation way member '#{way_name}'" unless way
           relation << OSM::Member.new( 'way', way.id, $1 )
         end
-      elsif key =~ /^(.*):(.*)/
-        raise "*** unknown relation member type '#{$1}', must be either 'node' or 'way'"
+      elsif key =~ /^(.*):(.*)/ && "#{$1}" != 'restriction'
+        raise "*** unknown relation member type '#{$1}:#{$2}', must be either 'node' or 'way'"
       else
         relation << { key => value }
       end
@@ -132,6 +138,12 @@ end
 Given /^the input file ([^"]*)$/ do |file|
   raise "*** Input file must in .osm format" unless File.extname(file)=='.osm'
   @osm_str = File.read file
+end
+
+Given /^the raster source$/ do |data|
+  Dir.chdir TEST_FOLDER do
+    File.open("rastersource.asc", "w") {|f| f.write(data)}
+  end
 end
 
 Given /^the data has been saved to disk$/ do

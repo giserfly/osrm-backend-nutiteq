@@ -8,6 +8,17 @@ When /^I match I should get$/ do |table|
         response = request_url row['request']
       else
         params = @query_params
+        got = {}
+        row.each_pair do |k,v|
+          if k =~ /param:(.*)/
+            if v=='(nil)'
+              params[$1]=nil
+            elsif v!=nil
+              params[$1]=[v]
+            end
+            got[k]=v
+          end
+        end
         trace = []
         timestamps = []
         if row['trace']
@@ -19,21 +30,10 @@ When /^I match I should get$/ do |table|
           if row['timestamps']
               timestamps = row['timestamps'].split(" ").compact.map { |t| t.to_i}
           end
-          got = {'trace' => row['trace'] }
+          got = got.merge({'trace' => row['trace'] })
           response = request_matching trace, timestamps, params
         else
           raise "*** no trace"
-        end
-      end
-
-      row.each_pair do |k,v|
-        if k =~ /param:(.*)/
-          if v=='(nil)'
-            params[$1]=nil
-          elsif v!=nil
-            params[$1]=v
-          end
-          got[k]=v
         end
       end
 
@@ -52,10 +52,35 @@ When /^I match I should get$/ do |table|
       end
 
       sub_matchings = []
+      turns = ''
+      route = ''
+      duration = ''
       if response.code == "200"
         if table.headers.include? 'matchings'
           sub_matchings = json['matchings'].compact.map { |sub| sub['matched_points']}
         end
+        if table.headers.include? 'turns'
+          raise "*** Checking turns only support for matchings with one subtrace" unless json['matchings'].size == 1
+          turns = turn_list json['matchings'][0]['instructions']
+        end
+        if table.headers.include? 'route'
+          raise "*** Checking route only support for matchings with one subtrace" unless json['matchings'].size == 1
+          route = way_list json['matchings'][0]['instructions']
+        if table.headers.include? 'duration'
+          raise "*** Checking duration only support for matchings with one subtrace" unless json['matchings'].size == 1
+          duration = json['matchings'][0]['route_summary']['total_time']
+        end
+        end
+      end
+
+      if table.headers.include? 'turns'
+        got['turns'] = turns
+      end
+      if table.headers.include? 'route'
+        got['route'] = route
+      end
+      if table.headers.include? 'duration'
+        got['duration'] = duration.to_s
       end
 
       ok = true
@@ -80,8 +105,12 @@ When /^I match I should get$/ do |table|
         end
       end
       if ok
-        got['matchings'] = row['matchings']
-        got['timestamps'] = row['timestamps']
+        if table.headers.include? 'matchings'
+          got['matchings'] = row['matchings']
+        end
+        if table.headers.include? 'timestamps'
+          got['timestamps'] = row['timestamps']
+        end
       else
         got['matchings'] = encoded_result
         row['matchings'] = extended_target
@@ -93,4 +122,3 @@ When /^I match I should get$/ do |table|
   end
   table.diff! actual
 end
-

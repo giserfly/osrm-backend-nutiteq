@@ -4,7 +4,7 @@ local find_access_tag = require("lib/access").find_access_tag
 local limit = require("lib/maxspeed").limit
 
 -- Begin of globals
-barrier_whitelist = { [""] = true, ["cycle_barrier"] = true, ["bollard"] = true, ["entrance"] = true, ["cattle_grid"] = true, ["border_control"] = true, ["toll_booth"] = true, ["sally_port"] = true, ["gate"] = true, ["no"] = true }
+barrier_whitelist = { [""] = true, ["cycle_barrier"] = true, ["bollard"] = true, ["entrance"] = true, ["cattle_grid"] = true, ["border_control"] = true, ["toll_booth"] = true, ["sally_port"] = true, ["gate"] = true, ["no"] = true, ["block"] = true }
 access_tag_whitelist = { ["yes"] = true, ["permissive"] = true, ["designated"] = true }
 access_tag_blacklist = { ["no"] = true, ["private"] = true, ["agricultural"] = true, ["forestry"] = true }
 access_tag_restricted = { ["destination"] = true, ["delivery"] = true }
@@ -90,13 +90,13 @@ surface_speeds = {
   ["sand"] = 3
 }
 
+-- these need to be global because they are accesed externaly
 traffic_signal_penalty          = 2
 use_turn_restrictions           = false
+u_turn_penalty                  = 20
 
 local obey_oneway               = true
-local obey_bollards             = false
 local ignore_areas              = true
-local u_turn_penalty            = 20
 local turn_penalty              = 60
 local turn_bias                 = 1.4
 -- reduce the driving speed by 30% for unsafe roads
@@ -121,7 +121,7 @@ local function parse_maxspeed(source)
         n = 0
     end
     if string.match(source, "mph") or string.match(source, "mp/h") then
-        n = (n*1609)/1000;
+        n = (n*1609)/1000
     end
     return n
 end
@@ -156,7 +156,7 @@ function node_function (node, result)
   -- check if node is a traffic light
   local tag = node:get_value_by_key("highway")
   if tag and "traffic_signals" == tag then
-    result.traffic_lights = true;
+    result.traffic_lights = true
   end
 end
 
@@ -170,7 +170,7 @@ function way_function (way, result)
   local public_transport = way:get_value_by_key("public_transport")
   local bridge = way:get_value_by_key("bridge")
   if (not highway or highway == '') and
-  (not use_public_transport or not route or route == '') and
+  (not route or route == '') and
   (not use_public_transport or not railway or railway=='') and
   (not amenity or amenity=='') and
   (not man_made or man_made=='') and
@@ -227,15 +227,15 @@ function way_function (way, result)
 
   -- roundabout handling
   if junction and "roundabout" == junction then
-    result.roundabout = true;
+    result.roundabout = true
   end
 
   -- speed
   local bridge_speed = bridge_speeds[bridge]
   if (bridge_speed and bridge_speed > 0) then
-    highway = bridge;
+    highway = bridge
     if duration and durationIsValid(duration) then
-      result.duration = math.max( parseDuration(duration), 1 );
+      result.duration = math.max( parseDuration(duration), 1 )
     end
     result.forward_mode = mode_movable_bridge
     result.backward_mode = mode_movable_bridge

@@ -26,8 +26,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include "../typedefs.h"
-#include "../algorithms/tiny_components.hpp"
-#include "../data_structures/coordinate_calculation.hpp"
+#include "../algorithms/tarjan_scc.hpp"
+#include "../algorithms/coordinate_calculation.hpp"
 #include "../data_structures/dynamic_graph.hpp"
 #include "../data_structures/static_graph.hpp"
 #include "../util/fingerprint.hpp"
@@ -76,20 +76,9 @@ void DeleteFileIfExists(const std::string &file_name)
 }
 }
 
-void LoadRestrictions(const char* path, std::vector<TurnRestriction>& restriction_list)
-{
-    std::ifstream input_stream(path, std::ios::binary);
-    if (!input_stream.is_open())
-    {
-        throw osrm::exception("Cannot open restriction file");
-    }
-    loadRestrictionsFromFile(input_stream, restriction_list);
-}
-
-std::size_t LoadGraph(const char* path,
-                      std::vector<QueryNode>& coordinate_list,
-                      std::vector<NodeID>& barrier_node_list,
-                      std::vector<TarjanEdge>& graph_edge_list)
+std::size_t LoadGraph(const char *path,
+                      std::vector<QueryNode> &coordinate_list,
+                      std::vector<TarjanEdge> &graph_edge_list)
 {
     std::ifstream input_stream(path, std::ifstream::in | std::ifstream::binary);
     if (!input_stream.is_open())
@@ -100,10 +89,10 @@ std::size_t LoadGraph(const char* path,
     // load graph data
     std::vector<NodeBasedEdge> edge_list;
     std::vector<NodeID> traffic_light_node_list;
+    std::vector<NodeID> barrier_node_list;
 
     auto number_of_nodes = loadNodesFromFile(input_stream, barrier_node_list,
-                                             traffic_light_node_list,
-                                             coordinate_list);
+                                             traffic_light_node_list, coordinate_list);
 
     loadEdgesFromFile(input_stream, edge_list);
 
@@ -136,25 +125,19 @@ std::size_t LoadGraph(const char* path,
 int main(int argc, char *argv[])
 {
     std::vector<QueryNode> coordinate_list;
-    std::vector<TurnRestriction> restriction_list;
-    std::vector<NodeID> barrier_node_list;
 
     LogPolicy::GetInstance().Unmute();
     try
     {
         // enable logging
-        if (argc < 3)
+        if (argc < 2)
         {
-            SimpleLogger().Write(logWARNING) << "usage:\n" << argv[0]
-                                             << " <osrm> <osrm.restrictions>";
+            SimpleLogger().Write(logWARNING) << "usage:\n" << argv[0] << " <osrm>";
             return -1;
         }
 
-        SimpleLogger().Write() << "Using restrictions from file: " << argv[2];
-
         std::vector<TarjanEdge> graph_edge_list;
-        auto number_of_nodes = LoadGraph(argv[1], coordinate_list, barrier_node_list, graph_edge_list);
-        LoadRestrictions(argv[2], restriction_list);
+        auto number_of_nodes = LoadGraph(argv[1], coordinate_list, graph_edge_list);
 
         tbb::parallel_sort(graph_edge_list.begin(), graph_edge_list.end());
         const auto graph = std::make_shared<TarjanGraph>(number_of_nodes, graph_edge_list);
@@ -163,9 +146,7 @@ int main(int argc, char *argv[])
 
         SimpleLogger().Write() << "Starting SCC graph traversal";
 
-        RestrictionMap restriction_map(restriction_list);
-        auto tarjan = osrm::make_unique<TarjanSCC<TarjanGraph>>(graph, restriction_map,
-                                                                barrier_node_list);
+        auto tarjan = osrm::make_unique<TarjanSCC<TarjanGraph>>(graph);
         tarjan->run();
         SimpleLogger().Write() << "identified: " << tarjan->get_number_of_components()
                                << " many components";
@@ -223,7 +204,7 @@ int main(int argc, char *argv[])
                 if (source < target || SPECIAL_EDGEID == graph->FindEdge(target, source))
                 {
                     total_network_length +=
-                        100 * coordinate_calculation::euclidean_distance(
+                        100 * coordinate_calculation::great_circle_distance(
                                   coordinate_list[source].lat, coordinate_list[source].lon,
                                   coordinate_list[target].lat, coordinate_list[target].lon);
 
@@ -231,8 +212,9 @@ int main(int argc, char *argv[])
                     BOOST_ASSERT(source != SPECIAL_NODEID);
                     BOOST_ASSERT(target != SPECIAL_NODEID);
 
-                    const unsigned size_of_containing_component = std::min(
-                        tarjan->get_component_size(source), tarjan->get_component_size(target));
+                    const unsigned size_of_containing_component =
+                        std::min(tarjan->get_component_size(tarjan->get_component_id(source)),
+                                 tarjan->get_component_size(tarjan->get_component_id(target)));
 
                     // edges that end on bollard nodes may actually be in two distinct components
                     if (size_of_containing_component < 1000)

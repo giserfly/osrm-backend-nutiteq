@@ -35,24 +35,27 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <boost/algorithm/string.hpp>
 #include <boost/algorithm/string/regex.hpp>
+#include <boost/algorithm/string/predicate.hpp>
 #include <boost/ref.hpp>
 #include <boost/regex.hpp>
+#include <boost/optional/optional.hpp>
+
+#include <osmium/osm.hpp>
+#include <osmium/tags/regex_filter.hpp>
 
 #include <algorithm>
+#include <iterator>
 
 namespace
 {
 int lua_error_callback(lua_State *lua_state)
 {
     std::string error_msg = lua_tostring(lua_state, -1);
-    std::ostringstream error_stream;
-    error_stream << error_msg;
-    throw osrm::exception("ERROR occured in profile script:\n" + error_stream.str());
+    throw osrm::exception("ERROR occured in profile script:\n" + error_msg);
 }
 }
 
-RestrictionParser::RestrictionParser(lua_State *lua_state)
-    : use_turn_restrictions(true)
+RestrictionParser::RestrictionParser(lua_State *lua_state) : use_turn_restrictions(true)
 {
     ReadUseRestrictionsSetting(lua_state);
 
@@ -104,18 +107,18 @@ void RestrictionParser::ReadRestrictionExceptions(lua_State *lua_state)
 
 /**
  * Tries to parse an relation as turn restriction. This can fail for a number of
- * reasons, this the return type is a mapbox::util::optional<>.
+ * reasons, this the return type is a boost::optional<T>.
  *
  * Some restrictions can also be ignored: See the ```get_exceptions``` function
  * in the corresponding profile.
  */
-mapbox::util::optional<InputRestrictionContainer>
+boost::optional<InputRestrictionContainer>
 RestrictionParser::TryParse(const osmium::Relation &relation) const
 {
     // return if turn restrictions should be ignored
     if (!use_turn_restrictions)
     {
-        return mapbox::util::optional<InputRestrictionContainer>();
+        return {};
     }
 
     osmium::tags::KeyPrefixFilter filter(false);
@@ -129,28 +132,42 @@ RestrictionParser::TryParse(const osmium::Relation &relation) const
     // if it's a restriction, continue;
     if (std::distance(fi_begin, fi_end) == 0)
     {
-        return mapbox::util::optional<InputRestrictionContainer>();
+        return {};
     }
 
     // check if the restriction should be ignored
     const char *except = relation.get_value_by_key("except");
     if (except != nullptr && ShouldIgnoreRestriction(except))
     {
-        return mapbox::util::optional<InputRestrictionContainer>();
+        return {};
     }
 
     bool is_only_restriction = false;
 
-    for (auto iter = fi_begin; iter != fi_end; ++iter)
+    for (; fi_begin != fi_end; ++fi_begin)
     {
-        if (std::string("restriction") == iter->key() ||
-            std::string("restriction::hgv") == iter->key())
-        {
-            const std::string restriction_value(iter->value());
+        const std::string key(fi_begin->key());
+        const std::string value(fi_begin->value());
 
-            if (restriction_value.find("only_") == 0)
+        if (value.find("only_") == 0)
+        {
+            is_only_restriction = true;
+        }
+
+        // if the "restriction*" key is longer than 11 chars, it is a conditional exception (i.e.
+        // "restriction:<transportation_type>")
+        if (key.size() > 11)
+        {
+            const auto ex_suffix = [&](const std::string &exception)
             {
-                is_only_restriction = true;
+                return boost::algorithm::ends_with(key, exception);
+            };
+            bool is_actually_restricted =
+                std::any_of(begin(restriction_exceptions), end(restriction_exceptions), ex_suffix);
+
+            if (!is_actually_restricted)
+            {
+                return {};
             }
         }
     }
@@ -204,7 +221,7 @@ RestrictionParser::TryParse(const osmium::Relation &relation) const
             break;
         }
     }
-    return mapbox::util::optional<InputRestrictionContainer>(restriction_container);
+    return boost::make_optional(std::move(restriction_container));
 }
 
 bool RestrictionParser::ShouldIgnoreRestriction(const std::string &except_tag_string) const

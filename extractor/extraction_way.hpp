@@ -50,8 +50,8 @@ struct ExtractionWay
         backward_speed = -1;
         duration = -1;
         roundabout = false;
+        is_startpoint = true;
         is_access_restricted = false;
-        ignore_in_grid = false;
         name.clear();
         forward_travel_mode = TRAVEL_MODE_DEFAULT;
         backward_travel_mode = TRAVEL_MODE_DEFAULT;
@@ -121,7 +121,7 @@ struct ExtractionWay
     std::string name;
     bool roundabout;
     bool is_access_restricted;
-    bool ignore_in_grid;
+    bool is_startpoint;
     TravelMode forward_travel_mode : 4;
     TravelMode backward_travel_mode : 4;
 };

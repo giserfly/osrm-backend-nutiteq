@@ -52,6 +52,7 @@ Feature: Via points
             | a,c,f     | ab,bcd,bcd,de,efg        |
             | a,c,f,h   | ab,bcd,bcd,de,efg,efg,gh |
 
+
     Scenario: Duplicate via point
         Given the node map
             | x |   |   |   |   |   |

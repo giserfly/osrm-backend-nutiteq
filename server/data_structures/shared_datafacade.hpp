@@ -33,12 +33,14 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "datafacade_base.hpp"
 #include "shared_datatype.hpp"
 
+#include "../../algorithms/geospatial_query.hpp"
 #include "../../data_structures/range_table.hpp"
 #include "../../data_structures/static_graph.hpp"
 #include "../../data_structures/static_rtree.hpp"
-#include "../../util/boost_filesystem_2_fix.hpp"
 #include "../../util/make_unique.hpp"
 #include "../../util/simple_logger.hpp"
+
+#include <boost/thread.hpp>
 
 #include <algorithm>
 #include <limits>
@@ -57,6 +59,7 @@ template <class EdgeDataT> class SharedDataFacade final : public BaseDataFacade<
     using InputEdge = typename QueryGraph::InputEdge;
     using RTreeLeaf = typename super::RTreeLeaf;
     using SharedRTree = StaticRTree<RTreeLeaf, ShM<FixedPointCoordinate, true>::vector, true>;
+    using SharedGeospatialQuery = GeospatialQuery<SharedRTree>;
     using TimeStampedRTreePair = std::pair<unsigned, std::shared_ptr<SharedRTree>>;
     using RTreeNode = typename SharedRTree::TreeNode;
 
@@ -84,8 +87,10 @@ template <class EdgeDataT> class SharedDataFacade final : public BaseDataFacade<
     ShM<bool, true>::vector m_edge_is_compressed;
     ShM<unsigned, true>::vector m_geometry_indices;
     ShM<unsigned, true>::vector m_geometry_list;
+    ShM<bool, true>::vector m_is_core_node;
 
     boost::thread_specific_ptr<std::pair<unsigned, std::shared_ptr<SharedRTree>>> m_static_rtree;
+    boost::thread_specific_ptr<SharedGeospatialQuery> m_geospatial_query;
     boost::filesystem::path file_index_path;
 
     std::shared_ptr<RangeTable<16, true>> m_name_table;
@@ -118,6 +123,7 @@ template <class EdgeDataT> class SharedDataFacade final : public BaseDataFacade<
             osrm::make_unique<SharedRTree>(
                 tree_ptr, data_layout->num_entries[SharedDataLayout::R_SEARCH_TREE],
                 file_index_path, m_coordinate_list)));
+        m_geospatial_query.reset(new SharedGeospatialQuery(*m_static_rtree->second, m_coordinate_list));
     }
 
     void LoadGraph()
@@ -193,6 +199,21 @@ template <class EdgeDataT> class SharedDataFacade final : public BaseDataFacade<
         m_names_char_list.swap(names_char_list);
     }
 
+    void LoadCoreInformation()
+    {
+        if (data_layout->num_entries[SharedDataLayout::CORE_MARKER] <= 0)
+        {
+            return;
+        }
+
+        unsigned *core_marker_ptr = data_layout->GetBlockPtr<unsigned>(
+            shared_memory, SharedDataLayout::CORE_MARKER);
+        typename ShM<bool, true>::vector is_core_node(
+            core_marker_ptr,
+            data_layout->num_entries[SharedDataLayout::CORE_MARKER]);
+        m_is_core_node.swap(is_core_node);
+    }
+
     void LoadGeometries()
     {
         unsigned *geometries_compressed_ptr = data_layout->GetBlockPtr<unsigned>(
@@ -257,7 +278,7 @@ template <class EdgeDataT> class SharedDataFacade final : public BaseDataFacade<
             if (!boost::filesystem::exists(file_index_path))
             {
                 SimpleLogger().Write(logDEBUG) << "Leaf file name " << file_index_path.string();
-                throw osrm::exception("Could not load leaf index file."
+                throw osrm::exception("Could not load leaf index file. "
                                       "Is any data loaded into shared memory?");
             }
 
@@ -268,6 +289,7 @@ template <class EdgeDataT> class SharedDataFacade final : public BaseDataFacade<
             LoadTimestamp();
             LoadViaNodeList();
             LoadNames();
+            LoadCoreInformation();
 
             data_layout->PrintInformation();
 
@@ -362,63 +384,48 @@ template <class EdgeDataT> class SharedDataFacade final : public BaseDataFacade<
         return m_travel_mode_list.at(id);
     }
 
-    bool LocateClosestEndPointForCoordinate(const FixedPointCoordinate &input_coordinate,
-                                            FixedPointCoordinate &result,
-                                            const unsigned zoom_level = 18) override final
+    std::vector<PhantomNodeWithDistance>
+    NearestPhantomNodesInRange(const FixedPointCoordinate &input_coordinate,
+                               const float max_distance,
+                               const int bearing = 0,
+                               const int bearing_range = 180) override final
     {
         if (!m_static_rtree.get() || CURRENT_TIMESTAMP != m_static_rtree->first)
         {
             LoadRTree();
+            BOOST_ASSERT(m_geospatial_query.get());
         }
 
-        return m_static_rtree->second->LocateClosestEndPointForCoordinate(input_coordinate, result,
-                                                                          zoom_level);
+        return m_geospatial_query->NearestPhantomNodesInRange(input_coordinate, max_distance, bearing, bearing_range);
     }
 
-    bool IncrementalFindPhantomNodeForCoordinate(const FixedPointCoordinate &input_coordinate,
-                                                 PhantomNode &resulting_phantom_node) override final
-    {
-        std::vector<PhantomNode> resulting_phantom_node_vector;
-        auto result = IncrementalFindPhantomNodeForCoordinate(input_coordinate,
-                                                              resulting_phantom_node_vector, 1);
-        if (result)
-        {
-            BOOST_ASSERT(!resulting_phantom_node_vector.empty());
-            resulting_phantom_node = resulting_phantom_node_vector.front();
-        }
-
-        return result;
-    }
-
-    bool
-    IncrementalFindPhantomNodeForCoordinate(const FixedPointCoordinate &input_coordinate,
-                                            std::vector<PhantomNode> &resulting_phantom_node_vector,
-                                            const unsigned number_of_results) override final
+    std::vector<PhantomNodeWithDistance>
+    NearestPhantomNodes(const FixedPointCoordinate &input_coordinate,
+                        const unsigned max_results,
+                        const int bearing = 0,
+                        const int bearing_range = 180) override final
     {
         if (!m_static_rtree.get() || CURRENT_TIMESTAMP != m_static_rtree->first)
         {
             LoadRTree();
+            BOOST_ASSERT(m_geospatial_query.get());
         }
 
-        return m_static_rtree->second->IncrementalFindPhantomNodeForCoordinate(
-            input_coordinate, resulting_phantom_node_vector, number_of_results);
+        return m_geospatial_query->NearestPhantomNodes(input_coordinate, max_results, bearing, bearing_range);
     }
 
-    bool IncrementalFindPhantomNodeForCoordinateWithMaxDistance(
-        const FixedPointCoordinate &input_coordinate,
-        std::vector<std::pair<PhantomNode, double>> &resulting_phantom_node_vector,
-        const double max_distance,
-        const unsigned min_number_of_phantom_nodes,
-        const unsigned max_number_of_phantom_nodes) override final
+    std::pair<PhantomNode, PhantomNode>
+    NearestPhantomNodeWithAlternativeFromBigComponent(const FixedPointCoordinate &input_coordinate,
+                                                      const int bearing = 0,
+                                                      const int bearing_range = 180) override final
     {
         if (!m_static_rtree.get() || CURRENT_TIMESTAMP != m_static_rtree->first)
         {
             LoadRTree();
+            BOOST_ASSERT(m_geospatial_query.get());
         }
 
-        return m_static_rtree->second->IncrementalFindPhantomNodeForCoordinateWithDistance(
-            input_coordinate, resulting_phantom_node_vector, max_distance,
-            min_number_of_phantom_nodes, max_number_of_phantom_nodes);
+        return m_geospatial_query->NearestPhantomNodeWithAlternativeFromBigComponent(input_coordinate, bearing, bearing_range);
     }
 
     unsigned GetCheckSum() const override final { return m_check_sum; }
@@ -445,6 +452,21 @@ template <class EdgeDataT> class SharedDataFacade final : public BaseDataFacade<
                       m_names_char_list.begin() + range.back() + 1, result.begin());
         }
         return result;
+    }
+
+    bool IsCoreNode(const NodeID id) const override final
+    {
+        if (m_is_core_node.size() > 0)
+        {
+            return m_is_core_node.at(id);
+        }
+
+        return false;
+    }
+
+    virtual std::size_t GetCoreSize() const override final
+    {
+        return m_is_core_node.size();
     }
 
     std::string GetTimestamp() const override final { return m_timestamp; }

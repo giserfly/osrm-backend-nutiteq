@@ -32,7 +32,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <boost/test/test_case_template.hpp>
 #include <boost/mpl/list.hpp>
 
+#include <algorithm>
+#include <limits>
 #include <random>
+#include <vector>
 
 BOOST_AUTO_TEST_SUITE(binary_heap)
 
@@ -165,6 +168,7 @@ BOOST_FIXTURE_TEST_CASE_TEMPLATE(decrease_key_test, T, storage_types, RandomData
         {
             heap.DecreaseKey(id, weights[id]);
             BOOST_CHECK_EQUAL(heap.Min(), min_id);
+            BOOST_CHECK_EQUAL(heap.MinKey(), min_weight);
             weights[id]--;
         }
 
@@ -172,6 +176,7 @@ BOOST_FIXTURE_TEST_CASE_TEMPLATE(decrease_key_test, T, storage_types, RandomData
         weights[id] -= 2;
         heap.DecreaseKey(id, weights[id]);
         BOOST_CHECK_EQUAL(heap.Min(), id);
+        BOOST_CHECK_EQUAL(heap.MinKey(), weights[id]);
     }
 }
 
