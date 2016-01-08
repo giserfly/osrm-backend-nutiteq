@@ -7,13 +7,13 @@
 #include <unordered_set>
 
 namespace Nuti { namespace Routing {
-    RoutingGraph::RoutingGraph() :
+    RoutingGraph::RoutingGraph(const Settings& settings) :
         _packages(),
-        _nodeBlockCache(512),
-        _geometryBlockCache(512),
-        _nameBlockCache(64),
-        _globalNodeBlockCache(64),
-        _rtreeNodeBlockCache(16),
+        _nodeBlockCache(settings.nodeBlockCacheSize),
+        _geometryBlockCache(settings.geometryBlockCacheSize),
+        _nameBlockCache(settings.nameBlockCacheSize),
+        _globalNodeBlockCache(settings.globalNodeBlockCacheSize),
+        _rtreeNodeBlockCache(settings.rtreeNodeBlockCacheSize),
         _mutex()
     {
     }

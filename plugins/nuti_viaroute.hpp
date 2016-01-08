@@ -75,7 +75,14 @@ class NutiViaRoutePlugin final : public BasePlugin
     {
         namespace fs = boost::filesystem;
 
-        routing_graph = std::make_shared<Nuti::Routing::RoutingGraph>();
+        Nuti::Routing::RoutingGraph::Settings graph_settings;
+        graph_settings.nodeBlockCacheSize = 512 * 16;
+        graph_settings.geometryBlockCacheSize = 512 * 16;
+        graph_settings.nameBlockCacheSize = 64 * 16;
+        graph_settings.globalNodeBlockCacheSize = 64 * 16;
+        graph_settings.rtreeNodeBlockCacheSize = 16 * 16;
+        routing_graph = std::make_shared<Nuti::Routing::RoutingGraph>(graph_settings);
+
         fs::directory_iterator end_iter;
         std::set<std::string> nutigraph_files;
         for (fs::directory_iterator dir_iter(base_path); dir_iter != end_iter; ++dir_iter)

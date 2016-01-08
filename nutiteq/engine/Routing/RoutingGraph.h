@@ -164,7 +164,18 @@ namespace Nuti { namespace Routing {
             NearestNode() = default;
         };
 
-        RoutingGraph();
+        struct Settings {
+            std::size_t nodeBlockCacheSize = 512;
+            std::size_t geometryBlockCacheSize = 512;
+            std::size_t nameBlockCacheSize = 64;
+            std::size_t globalNodeBlockCacheSize = 64;
+            std::size_t rtreeNodeBlockCacheSize = 16;
+
+            Settings() = default;
+        };
+
+        RoutingGraph() = delete;
+        explicit RoutingGraph(const Settings& settings);
         
         bool import(const std::string& fileName);
         bool import(const std::shared_ptr<std::ifstream>& file);

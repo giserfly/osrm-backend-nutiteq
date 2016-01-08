@@ -1,15 +1,9 @@
 ## About
 
+This is Nutiteq-specific version of OSRM project. It keeps original OSRM extract and prepare stages
+but replaces online routing engine with Nutiteq routing engine based on offline packages, prepared with Nutiteq osrm-converter (separate project).
+
 The Open Source Routing Machine is a high performance routing engine written in C++11 designed to run on OpenStreetMap data.
-
-## Current build status
-
-| build config |  branch | status |
-|:-------------|:--------|:------------|
-| Linux        | master  | [![Build Status](https://travis-ci.org/Project-OSRM/osrm-backend.png?branch=master)](https://travis-ci.org/Project-OSRM/osrm-backend) |
-| Linux        | develop | [![Build Status](https://travis-ci.org/Project-OSRM/osrm-backend.png?branch=develop)](https://travis-ci.org/Project-OSRM/osrm-backend) |
-| Windows      | master/develop | [![Build status](https://ci.appveyor.com/api/projects/status/4iuo3s9gxprmcjjh)](https://ci.appveyor.com/project/DennisOSRM/osrm-backend) |
-| LUAbind fork | master  | [![Build Status](https://travis-ci.org/DennisOSRM/luabind.png?branch=master)](https://travis-ci.org/DennisOSRM/luabind) |
 
 ## Building
 
