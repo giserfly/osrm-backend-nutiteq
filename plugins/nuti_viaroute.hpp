@@ -76,8 +76,8 @@ class NutiViaRoutePlugin final : public BasePlugin
         namespace fs = boost::filesystem;
 
         Nuti::Routing::RoutingGraph::Settings graph_settings;
-        graph_settings.nodeBlockCacheSize = 512 * 16;
-        graph_settings.geometryBlockCacheSize = 512 * 16;
+        graph_settings.nodeBlockCacheSize = 512 * 4;
+        graph_settings.geometryBlockCacheSize = 512 * 4;
         graph_settings.nameBlockCacheSize = 64 * 16;
         graph_settings.globalNodeBlockCacheSize = 64 * 16;
         graph_settings.rtreeNodeBlockCacheSize = 16 * 16;
