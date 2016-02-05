@@ -116,14 +116,14 @@ namespace osmium {
              * call will block if the queue is full.
              */
             void push(T value) {
-//                if (m_max_size) {
-//                    while (size() >= m_max_size) {
-//                        std::this_thread::sleep_for(full_queue_sleep_duration);
-//#ifdef OSMIUM_DEBUG_QUEUE_SIZE
-//                        ++m_full_counter;
-//#endif
-//                    }
-//                }
+                if (m_max_size) {
+                    while (size() >= m_max_size) {
+                        std::this_thread::sleep_for(full_queue_sleep_duration);
+#ifdef OSMIUM_DEBUG_QUEUE_SIZE
+                        ++m_full_counter;
+#endif
+                    }
+                }
                 std::lock_guard<std::mutex> lock(m_mutex);
                 m_queue.push(std::move(value));
 #ifdef OSMIUM_DEBUG_QUEUE_SIZE
