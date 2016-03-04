@@ -125,26 +125,30 @@ namespace Nuti { namespace Routing {
         
         std::lock_guard<std::recursive_mutex> lock(_mutex);
 
-        std::priority_queue<SearchNode> searchNodeQueue;
+        // First build a priority queue of the packages, based on distance from package bounding box
+        std::priority_queue<SearchRTreeNode> searchRTreeNodeQueue;
         for (const Package& package : _packages) {
-            searchNodeQueue.emplace(RTreeNodeId(BlockId(package.packageId, 0), 0), getBBoxDistance(pos, package.bbox));
+            double dist = getBBoxDistance(pos, package.bbox);
+            searchRTreeNodeQueue.emplace(RTreeNodeId(BlockId(package.packageId, 0), 0), dist);
         }
 
+        // Process the queue in order, with early out
         double bestDist = std::numeric_limits<double>::infinity();
         std::vector<NearestNode> bestNodes;
-        while (!searchNodeQueue.empty()) {
-            SearchNode searchNode = searchNodeQueue.top();
-            if (searchNode.distance > bestDist * DIST_THRESHOLD) {
+        while (!searchRTreeNodeQueue.empty()) {
+            SearchRTreeNode searchRTreeNode = searchRTreeNodeQueue.top();
+            if (searchRTreeNode.distance > bestDist * DIST_THRESHOLD) {
                 break;
             }
-            searchNodeQueue.pop();
+            searchRTreeNodeQueue.pop();
 
-            RTreeNode rtreeNode = loadRTreeNode(searchNode.rtreeNodeId);
-            for (const std::pair<cglib::bounding_box<double, 2>, RTreeNodeId>& child : rtreeNode.children) {
+            // Add all children of the node to the queue
+            RTreeNode rtreeNode = loadRTreeNode(searchRTreeNode.rtreeNodeId);
+            for (const std::pair<WGSBounds, RTreeNodeId>& child : rtreeNode.children) {
                 double dist = getBBoxDistance(pos, child.first);
-                searchNodeQueue.emplace(child.second, dist);
+                searchRTreeNodeQueue.emplace(child.second, dist);
             }
-            for (const std::pair<cglib::bounding_box<double, 2>, BlockId>& nodeBlockId : rtreeNode.nodeBlockIds) {
+            for (const std::pair<WGSBounds, BlockId>& nodeBlockId : rtreeNode.nodeBlockIds) {
                 double dist = getBBoxDistance(pos, nodeBlockId.first);
                 if (dist > bestDist * DIST_THRESHOLD) {
                     continue;
@@ -156,9 +160,35 @@ namespace Nuti { namespace Routing {
                     nodeBlock = loadNodeBlock(blockId);
                     _nodeBlockCache.put(blockId, nodeBlock);
                 }
-                for (unsigned int i = 0; i < nodeBlock->nodes.size(); i++) {
-                    const Node& node = nodeBlock->nodes[i];
-                    std::vector<WGSPos> geometry = getNodeGeometry(node);
+
+                // Fill bounds cache for the node block, if not yet created
+                if (nodeBlock->nodeGeometryBoundsCache.empty()) {
+                    nodeBlock->nodeGeometryBoundsCache.reserve(nodeBlock->nodes.size());
+                    for (unsigned int i = 0; i < nodeBlock->nodes.size(); i++) {
+                        const Node& node = nodeBlock->nodes[i];
+                        std::vector<WGSPos> geometry = getNodeGeometry(node);
+                        nodeBlock->nodeGeometryBoundsCache.push_back(WGSBounds::make_union(geometry.begin(), geometry.end()));
+                    }
+                }
+
+                // Build priority queue of the nodes within the block, using distance to geometry bounding box
+                std::priority_queue<SearchGeometry> searchGeometryQueue;
+                for (unsigned int i = 0; i < nodeBlock->nodeGeometryBoundsCache.size(); i++) {
+                    double dist = getBBoxDistance(pos, nodeBlock->nodeGeometryBoundsCache[i]);
+                    if (dist <= bestDist * DIST_THRESHOLD) {
+                        searchGeometryQueue.emplace(NodeId(blockId, i), dist);
+                    }
+                }
+
+                // Process the node priority queue, with early out
+                while (!searchGeometryQueue.empty()) {
+                    SearchGeometry searchGeometry = searchGeometryQueue.top();
+                    if (searchGeometry.distance > bestDist * DIST_THRESHOLD) {
+                        break;
+                    }
+                    searchGeometryQueue.pop();
+
+                    std::vector<WGSPos> geometry = getNodeGeometry(nodeBlock->nodes[searchGeometry.nodeId.elementIndex]);
                     double t = 0;
                     for (unsigned int j = 1; j < geometry.size(); j++) {
                         WGSPos posProj = getClosestSegmentPoint(pos, geometry[j - 1], geometry[j]);
@@ -176,7 +206,7 @@ namespace Nuti { namespace Routing {
                             
                             NearestNode newBestNode;
                             newBestNode.nodePos = posProj;
-                            newBestNode.nodeId = NodeId(blockId, i);
+                            newBestNode.nodeId = searchGeometry.nodeId;
                             newBestNode.geometrySegmentIndex = j;
                             newBestNode.geometryRelPos = static_cast<float>((t + cglib::length(posProj - geometry[j - 1])) / len);
                             bestNodes.push_back(newBestNode);
@@ -522,7 +552,7 @@ namespace Nuti { namespace Routing {
                 auto lon0 = minLon + bs.read_bits<int>(maxLonDiffBits);
                 auto lat1 = lat0 + bs.read_bits<int>(maxLatDiffBits2);
                 auto lon1 = lon0 + bs.read_bits<int>(maxLonDiffBits2);
-                cglib::bounding_box<double, 2> bbox(fromPoint(Point(lat0, lon0)), fromPoint(Point(lat1, lon1)));
+                WGSBounds bbox(fromPoint(Point(lat0, lon0)), fromPoint(Point(lat1, lon1)));
                 if (leaf) {
                     auto nodeBlockId = bs.read_bits<unsigned int>(maxNodeBlockBits);
                     rtreeNode.nodeBlockIds.emplace_back(bbox, BlockId(package.packageId, nodeBlockId));
@@ -573,7 +603,7 @@ namespace Nuti { namespace Routing {
         return posProj;
     }
     
-    double RoutingGraph::getBBoxDistance(const WGSPos& pos, const cglib::bounding_box<double, 2>& bbox) {
+    double RoutingGraph::getBBoxDistance(const WGSPos& pos, const WGSBounds& bbox) {
         // TODO: we do not handle -180/180 wrapping properly
         double lonFactor = std::cos(pos(0) * DEG_TO_RAD);
         double dist = std::max(bbox.min(0) - pos(0), pos(0) - bbox.max(0));
